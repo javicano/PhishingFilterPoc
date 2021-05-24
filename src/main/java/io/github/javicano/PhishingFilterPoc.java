@@ -9,16 +9,19 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.james.mime4j.MimeException;
-
 import io.github.javicano.phishing.filter.PhishingFilter;
 import io.github.javicano.phishing.filter.PhishingFilterFactory;
+import io.github.javicano.phishing.filter.PhishingPrediction;
 
 /**
  * PhishingFilterPoc
  *
  */
 public class PhishingFilterPoc {
+	
+	private final static String GBM_TYPE = "GBM";
+	
+	private final static String STACKED_TYPE = "Stacked";
 	
 	private static void printInbox(List<EmailInfo> hamMails, List<EmailInfo> phishingMails) {
 		System.out.println(" -------------------------------------------------------------");
@@ -62,27 +65,28 @@ public class PhishingFilterPoc {
 		return emailInfo;
 	}
 	
-	private static void inboxClassifier(File[] emails) {
+	private static void inboxClassifier(File[] emails, String modelType) {
     	List<EmailInfo> phishingMails = new ArrayList<EmailInfo>(); 
     	List<EmailInfo> hamMails = new ArrayList<EmailInfo>();
     	
     	PhishingFilter phishingFilter = PhishingFilterFactory.getInstance();
     	
     	for(File email: emails) {
-    		boolean isPhishing;
+    		PhishingPrediction phishiPrediction;
 			try {
-				isPhishing = phishingFilter.isPhishingEmail(email);
+				phishiPrediction = phishingFilter.isPhishingEmail_GBM(email);
 				EmailInfo emailInfo = getEmailInfo(email);
-				if(isPhishing == true) {
+				if(phishiPrediction.isPhishing() == true) {
 	    			phishingMails.add(emailInfo);
 	    		}
 	    		else {
 	    			hamMails.add(emailInfo);
 	    		}
-			} catch (StackOverflowError | MimeException | IOException e) {
+			} catch (StackOverflowError | Exception e) {
 				e.printStackTrace();
 			} 
     	}
+    	System.out.println(" ");
     	printInbox(hamMails, phishingMails);
 	}
 	
@@ -93,11 +97,17 @@ public class PhishingFilterPoc {
 	
     public static void main(String[] args){
     	
-    	if(args.length == 0) {
-    		System.out.println("[WARN] Email collection path should be introduced");
+    	if(args.length != 2) {
+			System.out.println("[ERROR] Incorrect arguments ");
+			System.out.println("[INFO]  PhishingFilterPoc: ");
+			System.out.println("[INFO]   - arg1: Email collection path");
+			System.out.println("[INFO]   - arg2: Model type: [Stacked, GBM] ");
+    	} else if (!args[1].equalsIgnoreCase(GBM_TYPE) &&  !args[1].equalsIgnoreCase(STACKED_TYPE)){
+    		System.out.println("[ERROR] Incorrect Model type [Stacked, GBM]");
     	} else {
     		File[] incomingEmails = readIncomingEmails(args[0]);
-    		inboxClassifier(incomingEmails);
+    		System.out.println("Classifying incoming emails ...");
+    		inboxClassifier(incomingEmails, args[1]);
     	}	
     }
 }
