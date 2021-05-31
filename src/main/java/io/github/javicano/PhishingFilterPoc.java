@@ -71,6 +71,8 @@ public class PhishingFilterPoc {
     	
     	PhishingFilter phishingFilter = PhishingFilterFactory.getInstance();
     	
+    	long startTime = System.currentTimeMillis(); 
+    	
     	for(File email: emails) {
     		PhishingPrediction phishiPrediction;
 			try {
@@ -86,7 +88,13 @@ public class PhishingFilterPoc {
 				e.printStackTrace();
 			} 
     	}
+    	
+    	long elapsedTime = System.currentTimeMillis() - startTime;
+    	
     	System.out.println(" ");
+    	System.out.println(" Elapsed Time: " + elapsedTime + " ms");
+    	System.out.println(" ");
+    	
     	printInbox(hamMails, phishingMails);
 	}
 	
